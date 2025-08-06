@@ -1,102 +1,131 @@
-# python-package-template
-This is a template on how to package a simple Python project
+# lris2-drp
+
+`lris2-drp` is a data reduction pipeline for LRIS2 flat-field images.  
+It performs flat-field normalization, correction, slit tracing, and QA visualization using a Prefect-based workflow engine.
 
 ## Table of Contents
 
-1. Installation
-2. Setting Up Your Package
-3. Installing Dependencies
-4. Building Your Package
-5. Publishing to PyPI
+1. Installation  
+2. Setting Up Your Package  
+3. Running the DRP  
+4. Output Files  
+5. Configuration Tips
 
-## Installation
+---
 
-To install the package in editable mode (ideal for development), follow these steps:
+## 1. Installation
 
 ### Requirements
 
-- Python 3.7 or higher
-- `pip` (ensure it's the latest version)
-- `setuptools` 42 or higher (for building the package)
+- Python 3.10 or higher  
+- `pip`  
+- `setuptools` >= 42  
+- FITS images from LRIS2
 
-### 1. Clone the repository
-
-First, clone the repository to your local machine:
-
-```bash
-git clone https://github.com/yourusername/your-package-name.git
-cd your-package-name
-```
-
-### 2. Set Up Your Python Environment
-
-Create a virtual environment for your package:
+### Clone the Repository
 
 ```bash
-python -m venv venv
-source venv/bin/activate
+git clone https://github.com/caltech/lris2-drp.git
+cd lris2-drp
 ```
 
-### 3. Install Build Dependencies
+### Create and Activate Virtual Environment
 
-Make sure setuptools and pip are up to date:
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+### Install the Package
 
 ```bash
 pip install --upgrade pip setuptools wheel
+pip install -e .[dev]
 ```
 
-## Setting Up Your Package
-### 1. Update pyproject.toml
+---
 
-The pyproject.toml file contains the configuration for building and packaging your Python project. You'll want to customize this to reflect your package's name, version, dependencies, license, etc.
-```yml
-    name: The name of your package.
-    version: The version of your package (e.g., "0.1.0").
-    dependencies: List any runtime dependencies your package requires (e.g., requests, numpy).
-    license: Specify your package's license, either as text or a file. For example:
-        license = { text = "MIT" }
-        Or, if you have a LICENSE file: license = { file = "LICENSE.txt" }
-```
+## 2. Setting Up Your Package
 
-### 2. Update README.md
+This package is built using [PEP 517/518](https://www.python.org/dev/peps/pep-0517/) with `pyproject.toml`.
 
-Edit this README file to reflect your package's functionality.
-
-## Installing Dependencies
-
-To install your package in editable mode for development, use the following command:
+To install only the core dependencies:
 
 ```bash
 pip install -e .
 ```
 
-This will install the package, allowing you to edit it directly and have changes take effect immediately without reinstalling.
-
-To install any optional dependencies, such as development dependencies, use:
+Optional developer tools (like `black`, `flake8`, `pytest`) can be installed via:
 
 ```bash
 pip install -e .[dev]
 ```
 
-## Building Your Package
+---
 
-To build your package for distribution (e.g., for uploading to PyPI), you can use:
+## 3. Running the DRP
 
-```bash
-python -m build
+To batch-process a folder of flat-field FITS files:
+
+```python
+from lris2_drp.flows import batch_process_all_flats
+
+batch_process_all_flats(
+    input_dir="/path/to/flats",
+    output_dir="/path/to/results",
+)
 ```
 
-This will create .tar.gz and .whl files in the dist/ directory.
+This will process up to 2 files in parallel (configurable) using Prefect’s `ConcurrentTaskRunner`.
 
-## Publishing to PyPI
+Each file goes through:
 
-To publish your package to PyPI, you can use the twine tool:
+- Normalization  
+- Flat-field correction  
+- Slit tracing  
+- QA plot generation  
+- FITS header augmentation
 
-```bash
-pip install twine
-twine upload dist/*
+---
+
+## 4. Output Files
+
+For each input FITS file, the following will be written to the output directory:
+
+```
+<filename>/
+├── flat_corrected.fits     # Flat-field corrected image
+├── flat_norm_qa.png        # QA plot of normalized flat
+└── slit_trace.txt          # Slit trace positions
 ```
 
-You'll need to have a PyPI account and have your credentials set up for this.
+The corrected FITS file includes a `FLATCOR` keyword in the header:
+
+```
+FLATCOR = 'True' / Flat-field correction applied
+```
+
+Additional keywords track reduction steps (optional to expand).
+
+---
+
+## 5. Configuration Tips
+
+### Adjust Parallelism
+
+To change the number of files processed in parallel, set `max_workers` in `ConcurrentTaskRunner`:
+
+```python
+@flow(task_runner=ConcurrentTaskRunner(max_workers=4))
+def batch_process_all_flats(...):
+```
+
+### Customize Output Paths
+
+Output filenames and directory structure can be customized in:
+
+- `save_trace_solution()`
+- `save_corrected_fits()`
+- `generate_qa_plot()`
 
 ---

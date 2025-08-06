@@ -1,0 +1,3 @@
+# config.yaml
+input_dir: data/lris2_flats
+output_dir: output

@@ -5,35 +5,45 @@ build-backend = "setuptools.build_meta"
 
 [project]
 # Basic information about your project.
-name = "your-package-name" 
+name = "lris2-drp" 
 version = "0.1.0" 
-dependencies = []
-requires-python = ">=3.7"
+dependencies = [
+  "prefect>=3.4.11",
+  "astropy",
+  "numpy",
+  "matplotlib",
+  "scipy"
+]
+requires-python = ">=3.9"
 authors = [
-  {name = "Your Name", email = "your.email@example.com"}
+  { name = "Michael Langmayr", email = "langmayr@caltech.edu" }
 ]
 maintainers = [
-  {name = "Your Name", email = "your.email@example.com"}
+  { name = "Michael Langmayr", email = "langmayr@caltech.edu" }
 ]
-description = "A brief description of your package"
+description = "Data Reduction Pipeline for LRIS2"
 readme = "README.md" 
 license = { text = "MIT" }
 keywords = ["example", "package", "keywords"] 
 classifiers = [
-  "Programming Language :: Python"
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Astronomy",
 ]
 
 [project.urls]
 # Various URLs related to your project. These links are displayed on PyPI.
-Homepage = "https://example.com" 
-Documentation = "https://readthedocs.org"
-Repository = "https://github.com/yourusername/your-repo"
-"Bug Tracker" = "https://github.com/yourusername/your-repo/issues" 
-Changelog = "https://github.com/yourusername/your-repo/blob/master/CHANGELOG.md"
+#Homepage = "https://example.com" 
+#Documentation = "https://readthedocs.org"
+Repository = "https://github.com/CaltechOpticalObservatories/lris2-drp"
+"Bug Tracker" = "https://github.com/CaltechOpticalObservatories/lris2-drp/issues" 
+#Changelog = "https://github.com/yourusername/your-repo/blob/master/CHANGELOG.md"
 
 [project.scripts]
 # Defines command-line scripts for your package. Replace with your script and function.
-your-command = "your_module:your_function"
+lris2-drp = "lris2_drp.main:main"
 
 [project.optional-dependencies]
 # Optional dependencies that can be installed with extra tags, like "dev".
@@ -42,3 +52,6 @@ dev = [
   "black",
   "flake8"
 ]
+
+[tool.setuptools]
+packages = { find = { include = ["lris2_drp"] } }
