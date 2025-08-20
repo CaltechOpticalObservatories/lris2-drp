@@ -1,14 +1,14 @@
 from prefect import flow, task, get_run_logger
 from prefect.task_runners import ConcurrentTaskRunner
 import os
-from lris2_drp.flat import (
+from core.flat import (
     load_flat_frame,
     normalize_flat,
     create_flat_correction,
     save_corrected_fits,
 )
-from lris2_drp.tracing import trace_slits_1d, save_trace_solution
-from lris2_drp.qa import generate_qa_plot
+from core.tracing import trace_slits_1d, save_trace_solution
+from core.qa import generate_qa_plot
 
 @task(name="Process Single LRIS2 Flat Frame", description="Run all DRP steps on a single flat FITS file")
 def process_flat_frame(filepath: str, output_dir: str):
