@@ -12,7 +12,8 @@ dependencies = [
   "numpy",
   "matplotlib",
   "scipy",
-  "keckdrpframework"
+  "keckdrpframework",
+  "distutils"
 ]
 requires-python = ">=3.9"
 authors = [
