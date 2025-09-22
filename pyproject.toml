@@ -1,18 +1,18 @@
 [build-system]
 # Specifies the build system to use. 
-requires = ["setuptools>=42"]
+requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-# Basic information about your project.
 name = "lris2-drp" 
 version = "0.1.0" 
 dependencies = [
-  "prefect>=3.4.11",
+  "prefect",
   "astropy",
   "numpy",
   "matplotlib",
-  "scipy"
+  "scipy",
+  "keckdrpframework"
 ]
 requires-python = ">=3.9"
 authors = [
@@ -24,7 +24,6 @@ maintainers = [
 description = "Data Reduction Pipeline for LRIS2"
 readme = "README.md" 
 license = { text = "MIT" }
-keywords = ["example", "package", "keywords"] 
 classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
@@ -41,17 +40,13 @@ Repository = "https://github.com/CaltechOpticalObservatories/lris2-drp"
 "Bug Tracker" = "https://github.com/CaltechOpticalObservatories/lris2-drp/issues" 
 #Changelog = "https://github.com/yourusername/your-repo/blob/master/CHANGELOG.md"
 
-[project.scripts]
-# Defines command-line scripts for your package. Replace with your script and function.
-lris2-drp = "lris2_drp.main:main"
 
 [project.optional-dependencies]
-# Optional dependencies that can be installed with extra tags, like "dev".
 dev = [
-  "pytest", 
+  "pytest",
   "black",
   "flake8"
 ]
 
 [tool.setuptools]
-packages = { find = { include = ["lris2_drp"] } }
+packages = { find = { include = ["src"] } }

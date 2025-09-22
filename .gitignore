@@ -173,3 +173,5 @@ cython_debug/
 
 # Output files
 output/*
+
+.python-version

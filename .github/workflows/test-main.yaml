@@ -1,0 +1,32 @@
+name: Run DRP Main
+
+on:
+  push:
+    branches: [main, mike/**]
+  pull_request:
+    branches: [main]
+
+jobs:
+  run-main:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -e .
+
+      - name: Run main.py
+        run: |
+          source venv/bin/activate
+          python src/main.py
