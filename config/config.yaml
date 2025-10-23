@@ -1,3 +1,6 @@
 # config.yaml
 input_dir: data/lris2_flats
 output_dir: output
+
+# Set to true to start Prefect UI (at http://127.0.0.1:4200)
+use_prefect_server: true

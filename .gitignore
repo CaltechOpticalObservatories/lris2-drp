@@ -175,3 +175,5 @@ cython_debug/
 output/*
 
 .python-version
+
+.DS_Store

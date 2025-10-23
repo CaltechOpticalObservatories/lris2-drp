@@ -2,8 +2,7 @@ import os
 from prefect import flow, task, get_run_logger
 from prefect.task_runners import ConcurrentTaskRunner
 from workflows.prefect_tasks.load_flat import load_flat_frame_task
-from workflows.prefect_tasks.normalize_flat import normalize_flat_task
-from workflows.prefect_tasks.create_correction import create_flat_correction_task
+from workflows.prefect_tasks.create_master_flat import create_master_flat_task
 from workflows.prefect_tasks.trace_slits import trace_slits_task
 from workflows.prefect_tasks.save_corrected import save_corrected_fits_task
 from workflows.prefect_tasks.save_trace import save_trace_solution_task
@@ -12,7 +11,13 @@ from workflows.prefect_tasks.qa_plot import generate_qa_plot_task
 
 @task(name="Process Single Flat Frame")
 def process_single_flat_frame(flat_fits_path: str, output_dir: str):
-    """Process a single LRIS2 flat FITS file through all DRP steps."""
+    """
+    Process a single LRIS2 flat FITS file through all DRP steps.
+
+    Args:
+        flat_fits_path: Path to input FITS file
+        output_dir: Output directory for results
+    """
     logger = get_run_logger()
     filename = os.path.splitext(os.path.basename(flat_fits_path))[0]
 
@@ -25,27 +30,45 @@ def process_single_flat_frame(flat_fits_path: str, output_dir: str):
     os.makedirs(os.path.dirname(corrected_output), exist_ok=True)
 
     # Load FITS
+    logger.info(f"Loading {flat_fits_path}")
     data, header = load_flat_frame_task(flat_fits_path)
 
-    # DRP steps
-    norm = normalize_flat_task(data)
-    correction = create_flat_correction_task(norm)
+    # Trace slits
+    logger.info("Tracing slits")
     slit_positions = trace_slits_task(data)
 
+    # Create master flat
+    logger.info("Creating master flat correction")
+    correction = create_master_flat_task(
+        data,
+        slit_positions=slit_positions,
+        slit_width=50,
+        n_knots_spectral=100,
+        low_signal_threshold=30.0,
+        edge_trim_pixels=5
+    )
+
     # Save outputs
+    logger.info("Saving results")
     save_corrected_fits_task(data, correction, header, corrected_output)
     save_trace_solution_task(slit_positions, trace_output)
-    generate_qa_plot_task(norm, qa_output)
+    generate_qa_plot_task(correction, qa_output)
 
     logger.info(f"Finished processing {flat_fits_path}")
 
 @flow(
     name="Batch Process LRIS2 Flats",
-    description="Process all flat frames concurrently using Prefect",
+    description="Process all flat frames using spectroscopic flat fielding",
     task_runner=ConcurrentTaskRunner(max_workers=2),  # You can adjust this
 )
 def batch_process_all_flats(input_dir: str, output_dir: str):
-    """Process all FITS files in a directory using concurrent subflows."""
+    """
+    Process all FITS files in a directory using spectroscopic flat fielding.
+
+    Args:
+        input_dir: Directory containing input FITS files
+        output_dir: Directory for output files
+    """
     logger = get_run_logger()
 
     fits_files = [
