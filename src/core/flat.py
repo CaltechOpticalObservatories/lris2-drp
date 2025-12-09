@@ -43,15 +43,17 @@ def create_flat_correction(norm_data: np.ndarray) -> np.ndarray:
     return correction
 
 
-def save_corrected_fits(original_data: np.ndarray, correction: np.ndarray, header: dict, output_path: str) -> str:
-    """Apply the flat correction to the original data and save as a new FITS file."""
-    corrected_data = original_data.astype(np.float64) * correction
+def save_correction_fits(correction: np.ndarray, header: dict, output_path: str) -> str:
+    """Save the flat field correction map to a FITS file.
 
+    The correction map contains multiplicative factors (~1.0) to apply to science frames:
+        corrected_science = raw_science * correction
+    """
     # Add DRP history to header
-    header.add_history("DRP: Flat field correction applied")
-    header["FLATCORR"] = (True, "Flat field correction applied")
+    header.add_history("DRP: Flat field correction map created")
+    header["FLATCORR"] = (True, "Flat field correction map")
 
-    hdu = fits.PrimaryHDU(data=corrected_data, header=header)
+    hdu = fits.PrimaryHDU(data=correction, header=header)
     hdul = fits.HDUList([hdu])
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     hdul.writeto(output_path, overwrite=True)

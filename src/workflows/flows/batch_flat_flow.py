@@ -4,7 +4,7 @@ from prefect.task_runners import ConcurrentTaskRunner
 from workflows.prefect_tasks.load_flat import load_flat_frame_task
 from workflows.prefect_tasks.create_master_flat import create_master_flat_task
 from workflows.prefect_tasks.trace_slits import trace_slits_task
-from workflows.prefect_tasks.save_corrected import save_corrected_fits_task
+from workflows.prefect_tasks.save_corrected import save_correction_fits_task
 from workflows.prefect_tasks.save_trace import save_trace_solution_task
 from workflows.prefect_tasks.qa_plot import generate_qa_plot_task
 
@@ -22,12 +22,12 @@ def process_single_flat_frame(flat_fits_path: str, output_dir: str):
     filename = os.path.splitext(os.path.basename(flat_fits_path))[0]
 
     # Construct output paths
-    corrected_output = os.path.join(output_dir, filename, "flat_corrected.fits")
+    correction_output = os.path.join(output_dir, filename, "flat_correction.fits")
     trace_output = os.path.join(output_dir, filename, "slit_trace.txt")
     qa_output = os.path.join(output_dir, filename, "flat_norm_qa.png")
 
     # Ensure output dirs
-    os.makedirs(os.path.dirname(corrected_output), exist_ok=True)
+    os.makedirs(os.path.dirname(correction_output), exist_ok=True)
 
     # Load FITS
     logger.info(f"Loading {flat_fits_path}")
@@ -50,7 +50,7 @@ def process_single_flat_frame(flat_fits_path: str, output_dir: str):
 
     # Save outputs
     logger.info("Saving results")
-    save_corrected_fits_task(data, correction, header, corrected_output)
+    save_correction_fits_task(correction, header, correction_output)
     save_trace_solution_task(slit_positions, trace_output)
     generate_qa_plot_task(correction, qa_output)
 

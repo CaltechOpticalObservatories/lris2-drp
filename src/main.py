@@ -3,10 +3,9 @@ Main entry point for the LRIS2 Data Reduction Pipeline (DRP).
 This script initializes the pipeline and processes all flat field FITS files
 found in the specified input directory, saving the results to the output directory.
 """
-import yaml
 import os
 import subprocess
-import time
+import yaml
 from workflows.flows.batch_flat_flow import batch_process_all_flats
 
 def load_config(config_path="config/config.yaml"):
