@@ -46,8 +46,7 @@ def create_flat_correction(norm_data: np.ndarray) -> np.ndarray:
 def save_correction_fits(correction: np.ndarray, header: dict, output_path: str) -> str:
     """Save the flat field correction map to a FITS file.
 
-    The correction map contains multiplicative factors (~1.0) to apply to science frames:
-        corrected_science = raw_science * correction
+    The correction map contains multiplicative factors (~1.0) to apply to science frames.
     """
     # Add DRP history to header
     header.add_history("DRP: Flat field correction map created")

@@ -4,7 +4,7 @@ from prefect.task_runners import ConcurrentTaskRunner
 from workflows.prefect_tasks.load_flat import load_flat_frame_task
 from workflows.prefect_tasks.create_master_flat import create_master_flat_task
 from workflows.prefect_tasks.trace_slits import trace_slits_task
-from workflows.prefect_tasks.save_corrected import save_correction_fits_task
+from workflows.prefect_tasks.save_correction import save_correction_fits_task
 from workflows.prefect_tasks.save_trace import save_trace_solution_task
 from workflows.prefect_tasks.qa_plot import generate_qa_plot_task
 

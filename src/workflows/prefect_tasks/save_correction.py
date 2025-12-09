@@ -1,6 +1,6 @@
 from prefect import task
 from keckdrpframework.models.arguments import Arguments
-from keck_primitives.save_corrected import SaveCorrectionFits
+from keck_primitives.save_correction import SaveCorrectionFits
 from keck_primitives.utils import DummyAction, DummyContext
 
 

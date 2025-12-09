@@ -94,12 +94,12 @@ For each input FITS file, the following will be written to the output directory:
 
 ```
 <filename>/
-├── flat_corrected.fits     # Flat-field corrected image
+├── flat_correction.fits     # Flat-field correction matrix
 ├── flat_norm_qa.png        # QA plot of normalized flat
 └── slit_trace.txt          # Slit trace positions
 ```
 
-The corrected FITS file includes a `FLATCOR` keyword in the header:
+The correction FITS file includes a `FLATCOR` keyword in the header:
 
 ```
 FLATCOR = 'True' / Flat-field correction applied
@@ -125,7 +125,7 @@ def batch_process_all_flats(...):
 Output filenames and directory structure can be customized in:
 
 - `save_trace_solution()`
-- `save_corrected_fits()`
+- `save_correction_fits()`
 - `generate_qa_plot()`
 
 ---
