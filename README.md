@@ -67,16 +67,21 @@ pip install -e .[dev]
 
 To batch-process a folder of flat-field FITS files:
 
-```python
-from lris2_drp.flows import batch_process_all_flats
-
-batch_process_all_flats(
-    input_dir="/path/to/flats",
-    output_dir="/path/to/results",
-)
+```bash
+python src/main.py
 ```
 
-This will process up to 2 files in parallel (configurable) using Prefect’s `ConcurrentTaskRunner`.
+Configure the pipeline via `config/config.yaml`:
+
+```yaml
+input_dir: data/lris2_flats
+output_dir: output
+use_prefect_server: true
+save_corrected_flat: false  # save corrected flat images
+max_workers: 2
+```
+
+Files are processed in parallel using Prefect's `ConcurrentTaskRunner`.
 
 Each file goes through:
 
@@ -95,8 +100,9 @@ For each input FITS file, the following will be written to the output directory:
 ```
 <filename>/
 ├── flat_correction.fits     # Flat-field correction matrix
-├── flat_norm_qa.png        # QA plot of normalized flat
-└── slit_trace.txt          # Slit trace positions
+├── flat_corrected.fits      # Corrected flat image (if save_corrected: true)
+├── flat_norm_qa.png         # QA plot of normalized flat
+└── slit_trace.txt           # Slit trace positions
 ```
 
 The correction FITS file includes a `FLATCOR` keyword in the header:
@@ -113,11 +119,10 @@ Additional keywords track reduction steps (optional to expand).
 
 ### Adjust Parallelism
 
-To change the number of files processed in parallel, set `max_workers` in `ConcurrentTaskRunner`:
+To change the number of files processed in parallel, set `max_workers` in `config/config.yaml`:
 
-```python
-@flow(task_runner=ConcurrentTaskRunner(max_workers=4))
-def batch_process_all_flats(...):
+```yaml
+max_workers: 4
 ```
 
 ### Customize Output Paths
@@ -125,7 +130,7 @@ def batch_process_all_flats(...):
 Output filenames and directory structure can be customized in:
 
 - `save_trace_solution()`
-- `save_correction_fits()`
+- `save_flat_fits()`
 - `generate_qa_plot()`
 
 ---

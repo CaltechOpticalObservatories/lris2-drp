@@ -18,7 +18,8 @@ if __name__ == "__main__":
     input_dir = config["input_dir"]
     output_dir = config["output_dir"]
     use_prefect_server = config.get("use_prefect_server", True)
-    save_corrected = config.get("save_corrected", False)
+    save_corrected_flat = config.get("save_corrected_flat", False)
+    max_workers = config.get("max_workers", 2)
 
     os.makedirs(output_dir, exist_ok=True)
 
@@ -39,7 +40,7 @@ if __name__ == "__main__":
 
     try:
         print(f"🟢 Starting batch processing of FITS files in {input_dir}")
-        batch_process_all_flats(input_dir=input_dir, output_dir=output_dir, save_corrected=save_corrected)
+        batch_process_all_flats(input_dir=input_dir, output_dir=output_dir, save_corrected_flat=save_corrected_flat, max_workers=max_workers)
 
         if use_prefect_server:
             print("\n✅ Pipeline completed!")

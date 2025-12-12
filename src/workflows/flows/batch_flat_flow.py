@@ -10,14 +10,14 @@ from workflows.prefect_tasks.qa_plot import generate_qa_plot_task
 
 
 @task(name="Process Single Flat Frame")
-def process_single_flat_frame(flat_fits_path: str, output_dir: str, save_corrected: bool = False):
+def process_single_flat_frame(flat_fits_path: str, output_dir: str, save_corrected_flat: bool = False):
     """
     Process a single LRIS2 flat FITS file through all DRP steps.
 
     Args:
         flat_fits_path: Path to input FITS file
         output_dir: Output directory for results
-        save_corrected: If True, also save the corrected flat image
+        save_corrected_flat: If True, also save the corrected flat image
     """
     logger = get_run_logger()
     filename = os.path.splitext(os.path.basename(flat_fits_path))[0]
@@ -52,7 +52,7 @@ def process_single_flat_frame(flat_fits_path: str, output_dir: str, save_correct
     # Save outputs
     logger.info("Saving results")
     save_flat_fits_task(correction, header, correction_output)
-    if save_corrected:
+    if save_corrected_flat:
         corrected_output = os.path.join(output_dir, filename, "flat_corrected.fits")
         save_flat_fits_task(correction, header, corrected_output, original_data=data)
     save_trace_solution_task(slit_positions, trace_output)
@@ -60,30 +60,35 @@ def process_single_flat_frame(flat_fits_path: str, output_dir: str, save_correct
 
     logger.info(f"Finished processing {flat_fits_path}")
 
-@flow(
-    name="Batch Process LRIS2 Flats",
-    description="Process all flat frames using spectroscopic flat fielding",
-    task_runner=ConcurrentTaskRunner(max_workers=2),  # You can adjust this
-)
-def batch_process_all_flats(input_dir: str, output_dir: str, save_corrected: bool = False):
+def batch_process_all_flats(input_dir: str, output_dir: str, save_corrected_flat: bool = False, max_workers: int = 2):
     """
     Process all FITS files in a directory using spectroscopic flat fielding.
 
     Args:
         input_dir: Directory containing input FITS files
         output_dir: Directory for output files
-        save_corrected: If True, also save the corrected flat image (default: False)
+        save_corrected_flat: If True, also save the corrected flat image
+        max_workers: Number of files to process in parallel
     """
-    logger = get_run_logger()
+    @flow(
+        name="Batch Process LRIS2 Flats",
+        description="Process all flat frames using spectroscopic flat fielding",
+        task_runner=ConcurrentTaskRunner(max_workers=max_workers),
+    )
+    def _batch_process_all_flats(input_dir: str, output_dir: str, save_corrected_flat: bool, max_workers: int):
+        logger = get_run_logger()
 
-    fits_files = [
-        os.path.join(input_dir, f)
-        for f in os.listdir(input_dir)
-        if f.lower().endswith(".fits")
-    ]
-    logger.info(f"Found {len(fits_files)} FITS files in {input_dir}.")
+        fits_files = [
+            os.path.join(input_dir, f)
+            for f in os.listdir(input_dir)
+            if f.lower().endswith(".fits")
+        ]
+        logger.info(f"Found {len(fits_files)} FITS files in {input_dir}.")
+        logger.info(f"Settings: save_corrected_flat={save_corrected_flat}, max_workers={max_workers}")
 
-    futures = [process_single_flat_frame.submit(fp, output_dir, save_corrected) for fp in fits_files]
+        futures = [process_single_flat_frame.submit(fp, output_dir, save_corrected_flat) for fp in fits_files]
 
-    for future in futures:
-        future.result()
+        for future in futures:
+            future.result()
+
+    return _batch_process_all_flats(input_dir, output_dir, save_corrected_flat, max_workers)
