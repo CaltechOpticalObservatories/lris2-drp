@@ -4,19 +4,20 @@ from prefect.task_runners import ConcurrentTaskRunner
 from workflows.prefect_tasks.load_flat import load_flat_frame_task
 from workflows.prefect_tasks.create_master_flat import create_master_flat_task
 from workflows.prefect_tasks.trace_slits import trace_slits_task
-from workflows.prefect_tasks.save_correction import save_correction_fits_task
+from workflows.prefect_tasks.save_correction import save_flat_fits_task
 from workflows.prefect_tasks.save_trace import save_trace_solution_task
 from workflows.prefect_tasks.qa_plot import generate_qa_plot_task
 
 
 @task(name="Process Single Flat Frame")
-def process_single_flat_frame(flat_fits_path: str, output_dir: str):
+def process_single_flat_frame(flat_fits_path: str, output_dir: str, save_corrected: bool = False):
     """
     Process a single LRIS2 flat FITS file through all DRP steps.
 
     Args:
         flat_fits_path: Path to input FITS file
         output_dir: Output directory for results
+        save_corrected: If True, also save the corrected flat image
     """
     logger = get_run_logger()
     filename = os.path.splitext(os.path.basename(flat_fits_path))[0]
@@ -50,7 +51,10 @@ def process_single_flat_frame(flat_fits_path: str, output_dir: str):
 
     # Save outputs
     logger.info("Saving results")
-    save_correction_fits_task(correction, header, correction_output)
+    save_flat_fits_task(correction, header, correction_output)
+    if save_corrected:
+        corrected_output = os.path.join(output_dir, filename, "flat_corrected.fits")
+        save_flat_fits_task(correction, header, corrected_output, original_data=data)
     save_trace_solution_task(slit_positions, trace_output)
     generate_qa_plot_task(correction, qa_output)
 
@@ -61,13 +65,14 @@ def process_single_flat_frame(flat_fits_path: str, output_dir: str):
     description="Process all flat frames using spectroscopic flat fielding",
     task_runner=ConcurrentTaskRunner(max_workers=2),  # You can adjust this
 )
-def batch_process_all_flats(input_dir: str, output_dir: str):
+def batch_process_all_flats(input_dir: str, output_dir: str, save_corrected: bool = False):
     """
     Process all FITS files in a directory using spectroscopic flat fielding.
 
     Args:
         input_dir: Directory containing input FITS files
         output_dir: Directory for output files
+        save_corrected: If True, also save the corrected flat image (default: False)
     """
     logger = get_run_logger()
 
@@ -78,7 +83,7 @@ def batch_process_all_flats(input_dir: str, output_dir: str):
     ]
     logger.info(f"Found {len(fits_files)} FITS files in {input_dir}.")
 
-    futures = [process_single_flat_frame.submit(fp, output_dir) for fp in fits_files]
+    futures = [process_single_flat_frame.submit(fp, output_dir, save_corrected) for fp in fits_files]
 
     for future in futures:
         future.result()

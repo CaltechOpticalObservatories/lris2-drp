@@ -43,16 +43,38 @@ def create_flat_correction(norm_data: np.ndarray) -> np.ndarray:
     return correction
 
 
-def save_correction_fits(correction: np.ndarray, header: dict, output_path: str) -> str:
-    """Save the flat field correction map to a FITS file.
+def save_flat_fits(
+    correction: np.ndarray,
+    header: dict,
+    output_path: str,
+    original_data: Optional[np.ndarray] = None
+) -> str:
+    """Save flat field results to a FITS file.
 
-    The correction map contains multiplicative factors (~1.0) to apply to science frames.
+    By default, saves the correction matrix (multiplicative factors ~1.0 to apply to science frames).
+    If original_data is provided, saves the corrected image instead.
+
+    Args:
+        correction: The flat field correction matrix
+        header: FITS header to include
+        output_path: Path to save the FITS file
+        original_data: If provided, save corrected image (correction / original_data)
+
+    Returns:
+        Path to the saved FITS file
     """
-    # Add DRP history to header
-    header.add_history("DRP: Flat field correction map created")
-    header["FLATCORR"] = (True, "Flat field correction map")
+    header = header.copy()
 
-    hdu = fits.PrimaryHDU(data=correction, header=header)
+    if original_data is not None:
+        header.add_history("DRP: Flat field corrected image created")
+        header["FLATCORR"] = (True, "Flat field corrected image")
+        data_to_save = correction / original_data.astype(np.float64)
+    else:
+        header.add_history("DRP: Flat field correction map created")
+        header["FLATCORR"] = (True, "Flat field correction map")
+        data_to_save = correction
+
+    hdu = fits.PrimaryHDU(data=data_to_save, header=header)
     hdul = fits.HDUList([hdu])
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     hdul.writeto(output_path, overwrite=True)
@@ -203,8 +225,5 @@ def create_master_flat(flat_data: np.ndarray, **kwargs) -> np.ndarray:
     Returns:
         Master flat correction map (multiply science data by this)
     """
-    ratio = normalize_flat_spectroscopic(flat_data, **kwargs)
-    # The ratio is already the correction map
-    correction = ratio
-    
+    correction = normalize_flat_spectroscopic(flat_data, **kwargs)
     return correction

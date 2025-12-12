@@ -4,3 +4,6 @@ output_dir: output
 
 # Set to true to start Prefect UI (at http://127.0.0.1:4200)
 use_prefect_server: true
+
+# Set to true to also save corrected flat images (default: false, saves only correction matrix)
+save_corrected: true
