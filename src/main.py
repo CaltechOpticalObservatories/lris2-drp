@@ -6,7 +6,6 @@ found in the specified input directory, saving the results to the output directo
 import yaml
 import os
 import subprocess
-import time
 from workflows.flows.batch_flat_flow import batch_process_all_flats
 
 def load_config(config_path="config/config.yaml"):
