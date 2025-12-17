@@ -1,7 +1,5 @@
 from prefect import task
-from keckdrpframework.models.arguments import Arguments
-from keck_primitives.create_master_flat import CreateMasterFlat
-from keck_primitives.utils import DummyAction, DummyContext
+from core.flat import create_master_flat
 
 
 @task(name="Create Master Flat")
@@ -27,19 +25,12 @@ def create_master_flat_task(
     Returns:
         Master flat correction array (multiply science data by this)
     """
-    args = Arguments()
-    args["flat_data"] = flat_data
-    args["method"] = "spectroscopic"
-
-    if slit_positions is not None:
-        args["slit_positions"] = slit_positions
-    args["slit_width"] = slit_width
-    args["n_knots_spectral"] = n_knots_spectral
-    args["low_signal_threshold"] = low_signal_threshold
-    args["edge_trim_pixels"] = edge_trim_pixels
-
-    action = DummyAction(args=args)
-    context = DummyContext()
-
-    result = CreateMasterFlat(action, context)._perform(args, config={})
-    return result["correction"]
+    correction = create_master_flat(
+        flat_data,
+        slit_positions=slit_positions,
+        slit_width=slit_width,
+        n_knots_spectral=n_knots_spectral,
+        low_signal_threshold=low_signal_threshold,
+        edge_trim_pixels=edge_trim_pixels
+    )
+    return correction
