@@ -1,7 +1,5 @@
 """
 PyPEIT-based slit tracing flow.
-
-This flow uses PyPEIT's algorithms for slit tracing.
 """
 import os
 from prefect import flow, task, get_run_logger
