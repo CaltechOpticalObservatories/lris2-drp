@@ -7,6 +7,7 @@ import yaml
 import os
 import subprocess
 from workflows.flows.batch_flat_flow import batch_process_all_flats
+from workflows.flows.pypeit_trace_flow import pypeit_trace_flow
 
 def load_config(config_path="config/config.yaml"):
     """Load configuration from a YAML file."""
@@ -38,7 +39,8 @@ if __name__ == "__main__":
 
     try:
         print(f"🟢 Starting batch processing of FITS files in {input_dir}")
-        batch_process_all_flats(input_dir=input_dir, output_dir=output_dir)
+        # batch_process_all_flats(input_dir=input_dir, output_dir=output_dir)
+        pypeit_trace_flow(input_dir=input_dir, output_dir=output_dir)
 
         if use_prefect_server:
             print("\n✅ Pipeline completed!")
