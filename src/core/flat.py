@@ -4,7 +4,7 @@ from astropy.io import fits
 from typing import Tuple, List, Optional
 from scipy.interpolate import splrep, BSpline
 from .tracing import trace_slits_1d
-
+from astropy.stats import sigma_clipped_stats
 
 def load_flat_frame(filepath: str) -> Tuple[np.ndarray, dict]:
     """Load a FITS file and return its data and header."""
@@ -18,18 +18,22 @@ def normalize_flat(data: np.ndarray) -> np.ndarray:
     """
     Normalize the flat field data by dividing by the median of the illuminated area.
     """
-    data = data.astype(np.float64)
+    # Create a mask for saturated pixels by sigma clipping
+    base_mask = (data <= 0) | ~np.isfinite(data)
+    mean, median, std = sigma_clipped_stats(data[~base_mask], sigma=5.0, maxiters=5)
+    print(f'Flat image stats - mean: {mean}, median: {median}, std: {std}, max: {np.max(data[~base_mask])}, min: {np.min(data[~base_mask])}')
+    saturated = data > (median + 10 * std)
 
     # Define illuminated area as pixels above 10% of maximum value
-    threshold = 0.1 * np.max(data)
+    threshold = 0.1 * np.max(data[~saturated & ~base_mask])
     illuminated_mask = data > threshold
 
     # Compute median from illuminated area only
     if np.any(illuminated_mask):
-        median = np.median(data[illuminated_mask])
+        median = np.median(data[illuminated_mask & ~saturated & ~base_mask])
     else:
         # Fallback: use median of all positive values
-        median = np.median(data[data > 0])
+        median = np.median(data[~saturated & ~base_mask])
 
     # Normalize - result should be ~1.0 in illuminated areas
     return data / median
@@ -45,7 +49,7 @@ def create_flat_correction(norm_data: np.ndarray) -> np.ndarray:
 
 def save_corrected_fits(original_data: np.ndarray, correction: np.ndarray, header: dict, output_path: str) -> str:
     """Apply the flat correction to the original data and save as a new FITS file."""
-    corrected_data = original_data.astype(np.float64) * correction
+    corrected_data = original_data.astype(np.float64) / correction
 
     # Add DRP history to header
     header.add_history("DRP: Flat field correction applied")
@@ -152,33 +156,31 @@ def normalize_flat_spectroscopic(
     # Process each slit
     for slit_idx, slit_center in enumerate(slit_positions):
         # Define slit region
-        y_start = max(0, slit_center - slit_width // 2)
-        y_end = min(ny, slit_center + slit_width // 2)
+        x_start = max(0, slit_center - slit_width // 2)
+        x_end = min(nx, slit_center + slit_width // 2)
 
         # Extract slit region
-        slit_data = data[y_start:y_end, :]
+        slit_data = data[:, x_start:x_end]
 
         # For each column (spectral pixel), get median across slit
-        spectral_profile = np.median(slit_data, axis=0)
+        spectral_profile = np.median(slit_data, axis=1)
 
         # Fit B-spline along spectral direction
-        x_coords = np.arange(nx)
-        spectral_fit, _ = fit_bspline_1d(x_coords, spectral_profile, n_knots=n_knots_spectral)
+        y_coords = np.arange(ny)
+        spectral_fit, _ = fit_bspline_1d(y_coords, spectral_profile, n_knots=n_knots_spectral)
 
         # Replicate the fit across the slit width
-        for i in range(y_start, y_end):
+        for i in range(x_start, x_end):
             # Apply edge trimming
-            if i < y_start + edge_trim_pixels or i >= y_end - edge_trim_pixels:
-                flat_model[i, :] = 0.0  # Will be masked later
+            if i < x_start + edge_trim_pixels or i >= x_end - edge_trim_pixels:
+                flat_model[:, i] = 0.0  # Will be masked later
             else:
-                flat_model[i, :] = spectral_fit
-
-    # Create ratio map
+                flat_model[:, i] = spectral_fit    # Create ratio map
     ratio = np.ones_like(data)
 
     # Only correct where we have valid model and good signal
     valid = (flat_model > 0) & (data > low_signal_threshold)
-    ratio[valid] = flat_model[valid] / data[valid]
+    ratio[valid] = data[valid] / flat_model[valid]
 
     # Trim unreasonable values
     ratio[ratio < 0] = 1.0  # Negative ratios (line 906-908)
