@@ -49,10 +49,11 @@ def trace_slits_pypeit(
     edge_par['det_min_spec_length'] = det_min_spec_length
     edge_par['follow_span'] = follow_span
     edge_par['fit_order'] = fit_order
+    edge_par['maskdesign_trim'] = False
 
     # Create TraceImage from numpy array
     # PyPEIT expects the image in a specific format
-    trace_img = TraceImage(data.astype(np.float64))
+    trace_img = TraceImage(data.astype(np.float64), detector=spectrograph.get_detector_par(1))
 
     # Create EdgeTraceSet with spectrograph for proper defaults
     # Use auto=True to run the full tracing pipeline automatically

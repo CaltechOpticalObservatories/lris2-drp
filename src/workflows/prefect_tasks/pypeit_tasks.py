@@ -8,6 +8,7 @@ from prefect import task, get_run_logger
 from core.flat import load_flat_frame
 from core.pypeit_tracing import trace_slits_pypeit, get_slit_centers, save_edge_trace
 from core.qa import generate_trace_qa_plot
+from core.pypeit_wavesol import make_wavecalib_pypeit
 
 
 @task(name="Trace Slits PyPEIT")
@@ -28,12 +29,12 @@ def trace_slits_pypeit_task(
     logger = get_run_logger()
     logger.info("Running PyPEIT edge tracing")
 
-    left_edges, right_edges, _ = trace_slits_pypeit(data, **kwargs)
+    left_edges, right_edges, edges = trace_slits_pypeit(data, **kwargs)
 
     n_slits = left_edges.shape[0] if left_edges.size > 0 else 0
     logger.info(f"PyPEIT found {n_slits} slits")
 
-    return left_edges, right_edges
+    return left_edges, right_edges, edges
 
 
 @task(name="Get Slit Centers PyPEIT")
@@ -116,3 +117,14 @@ def generate_trace_qa_plot_task(
     logger = get_run_logger()
     logger.info(f"Generating trace QA plot: {output_path}")
     return generate_trace_qa_plot(data, left_edges, right_edges, output_path, title)
+
+
+@task(name="Generate wave calib")
+def make_wavecalib_pypeit_task(
+        data: np.ndarray,
+        slits,
+        **kwargs
+):
+    logger = get_run_logger()
+    logger.info(f"Generating wave calib")
+    return make_wavecalib_pypeit(data, slits, **kwargs)

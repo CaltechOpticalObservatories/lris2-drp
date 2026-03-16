@@ -30,6 +30,7 @@ def trace_slits_pypeit(fits_path: str, output_dir: str):
     trace_output = os.path.join(output_dir, filename, "slit_trace.txt")
     edges_output = os.path.join(output_dir, filename, "slit_edges.npz")
     qa_output = os.path.join(output_dir, filename, "trace_qa.png")
+    edges_fits_output = os.path.join(output_dir, filename, "edges.fits")
 
     # Ensure output dirs
     os.makedirs(os.path.dirname(trace_output), exist_ok=True)
@@ -40,7 +41,8 @@ def trace_slits_pypeit(fits_path: str, output_dir: str):
 
     # Trace slits with PyPEIT
     logger.info("Tracing slits with PyPEIT EdgeTraceSet")
-    left_edges, right_edges = trace_slits_pypeit_task(data)
+    spectrograph_name = "keck_lris_red" if "Red" in fits_path else "keck_lris_blue"
+    left_edges, right_edges, edges = trace_slits_pypeit_task(data, spectrograph_name=spectrograph_name)
 
     # Get slit centers for compatibility with existing outputs
     slit_positions = get_slit_centers_task(left_edges, right_edges)
@@ -50,6 +52,9 @@ def trace_slits_pypeit(fits_path: str, output_dir: str):
     logger.info("Saving results")
     save_trace_solution_task(slit_positions, trace_output)
     save_edge_trace_task(left_edges, right_edges, edges_output)
+
+    # Save edges as PyPEIT EdgeTraceSet for potential future use
+    edges.to_file(file_path=edges_fits_output, overwrite=True)
 
     # Generate QA plot
     logger.info("Generating QA plot")

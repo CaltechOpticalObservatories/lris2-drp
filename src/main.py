@@ -8,6 +8,7 @@ import os
 import subprocess
 from workflows.flows.batch_flat_flow import batch_process_all_flats
 from workflows.flows.pypeit_trace_flow import pypeit_trace_flow
+from workflows.flows.pypeit_wavesol_flow import pypeit_wavesol_flow
 
 def load_config(config_path="config/config.yaml"):
     """Load configuration from a YAML file."""
@@ -16,7 +17,8 @@ def load_config(config_path="config/config.yaml"):
 
 if __name__ == "__main__":
     config = load_config()
-    input_dir = config["input_dir"]
+    input_dir_flats = config["input_dir_flats"]
+    input_dir_arcs = config["input_dir_arcs"]
     output_dir = config["output_dir"]
     use_prefect_server = config.get("use_prefect_server", True)
 
@@ -38,9 +40,11 @@ if __name__ == "__main__":
         print()
 
     try:
-        print(f"🟢 Starting batch processing of FITS files in {input_dir}")
+        print(f"🟢 Starting batch processing of FITS files in {input_dir_flats}")
         # batch_process_all_flats(input_dir=input_dir, output_dir=output_dir)
-        pypeit_trace_flow(input_dir=input_dir, output_dir=output_dir)
+        # pypeit_trace_flow(input_dir=input_dir_flats, output_dir=output_dir)
+        print(f"🟢 Starting batch processing of FITS files in {input_dir_arcs}")
+        pypeit_wavesol_flow(input_dir=input_dir_arcs, output_dir=output_dir)
 
         if use_prefect_server:
             print("\n✅ Pipeline completed!")
